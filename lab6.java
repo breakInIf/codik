@@ -37,7 +37,7 @@ public class IncomingFlightsRegistry {
 	  else {
 		  findFlight(flight).element().setRight(time);
 	  }
-	  reorderList(registro,registro.first(),registro.first());
+	  orderList(registro,registro.first(),findFlight(flight));
   }
 
   /**
@@ -72,28 +72,11 @@ public class IncomingFlightsRegistry {
 	  if(!registro.isEmpty()) {
 		  if(registro.first().element().arrivalTime()<=nowTime+180) {
 			  list.addFirst(registro.first().element());
-			  Position<FlightArrival> pos = registro.next(registro.first());
-			  Iterator<FlightArrival> it = registro.iterator();
-			  boolean stop  = false;
-			  it.next();
-			  while(it.hasNext()&&!stop) {
-				  if(it.next().arrivalTime()>list.first().element().arrivalTime()+120) stop = true;
-				  else {
-				  list.addLast(pos.element());
-				  pos = registro.next(pos);
-				  }
-			  }
-			  Position<FlightArrival> pos1;
-			  pos = findFlight(list.last().element().flight());
-			  while(pos!=null) {
-				  pos1 = pos;
-				  pos = registro.prev(pos);
-				  registro.remove(pos1);
-			  }
-			  
+			  registro.remove(registro.first());
 		  }
+		  if(!list.isEmpty()) list = addFlights(list,registro,list.first().element().arrivalTime()+120);  
 	  }
-      return list;
+	  return list;
   }
   
   private Position<FlightArrival> findFlight(String flight){
@@ -106,18 +89,24 @@ public class IncomingFlightsRegistry {
 	  }
 	  return pos;
   }
-  private void reorderList(PositionList<FlightArrival> list, Position<FlightArrival> cursor1, Position<FlightArrival> cursor2) {
-	  while(cursor1!=null) {
-		  if(cursor2.element().arrivalTime()<cursor1.element().arrivalTime()) {
-			  list.addBefore(cursor1, cursor2.element());
-			  list.remove(cursor2);
-			  break;
-			  }
-		  cursor1 = list.next(cursor1);
+  private void orderList(PositionList<FlightArrival> list, Position<FlightArrival> cursorList, Position<FlightArrival> cursorFlight) {
+	  if(cursorList!=null) {
+		  if(cursorFlight.element().arrivalTime()<cursorList.element().arrivalTime()) {
+			  list.addBefore(cursorList, cursorFlight.element());
+			  list.remove(cursorFlight);
+		  }
+		  else orderList(list,list.next(cursorList),cursorFlight);
 	  }
-	  while(cursor2!=null) {
-		  reorderList(list,list.first(),list.next(cursor2));
+  }
+  private PositionList<FlightArrival> addFlights(PositionList<FlightArrival> list,PositionList<FlightArrival> registro, Long time){
+	  if(!registro.isEmpty()) {
+		  if(registro.first().element().arrivalTime()<=time) {
+			  list.addLast(registro.first().element());
+			  registro.remove(registro.first());
+			  addFlights(list,registro,time);
+		  }
 	  }
+	  return list;
   }
   
 }
